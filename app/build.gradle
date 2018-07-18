@@ -48,6 +48,13 @@ android {
 
         }
     }
+
+    sourceSets {
+        androidTest{
+            java.srcDir file('src/androidTest/java')
+        }
+    }
+
 }
 
 dependencies {
@@ -60,16 +67,9 @@ dependencies {
     implementation 'com.google.code.findbugs:jsr305:3.0.1'
     implementation project(':jokesJava')
     implementation project(':jokeandroidlibrary')
-
-
+    androidTestImplementation 'junit:junit:4.12'
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
-   // testImplementation 'junit:junit:4.12'
-  //  androidTestImplementation 'junit:junit:4.12'
-  //  testImplementation 'org.mockito:mockito-core:2.11.0'
-
-
-  //  implementation 'org.testng:testng:6.9.6'
 }

@@ -5,9 +5,10 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
+import com.ViewClass;
+
 
 
 /**
@@ -18,25 +19,26 @@ public class MainActivityFragment extends Fragment {
     public MainActivityFragment() {
     }
 
+    //copied from https://medium.com/@thiagolopessilva/the-handling-multiple-java-source-and-resources-using-flavors-on-gradle-18a4b581285b
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_main, container, false);
 
+        if (!(BuildConfig.PAID_VERSION)) {
 
-        if (!(BuildConfig.PAID_VERSION)) {// this is the flag configured in build.gradle
+            View adView = ViewClass.getView(getActivity());
+            View view = root.findViewById(R.id.dummyView);
+            ViewGroup parent = (ViewGroup) view.getParent();
 
-            System.out.println("Entra aca");
-            AdView mAdView = (AdView) root.findViewById(R.id.adView);
-            // Create an ad request. Check logcat output for the hashed device ID to
-            // get test ads on a physical device. e.g.
-            // "Use AdRequest.Builder.addTestDevice("ABCDEF012345") to get test ads on this device."
-            AdRequest adRequest = new AdRequest.Builder()
-                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                    .build();
-            mAdView.loadAd(adRequest);
+            RelativeLayout.LayoutParams adParams =
+                    new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,
+                            RelativeLayout.LayoutParams.WRAP_CONTENT);
+            adParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            adParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+            parent.addView(adView,adParams);
+
         }
         return root;
-
     }
 }
