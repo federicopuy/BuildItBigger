@@ -20,6 +20,10 @@ import com.udacity.gradle.builditbigger.backend.myApi.MyApi;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import javax.security.auth.callback.Callback;
 
 import static com.example.jokeandroidlibrary.JokeDisplayActivity.JOKE_INTENT;
 
@@ -50,18 +54,32 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void tellJoke(View view) {
-        EndpointsAsyncTask task = new EndpointsAsyncTask(MainActivity.this);
+        EndpointsAsyncTask task = new EndpointsAsyncTask();
+        task.setContext(MainActivity.this);
         task.execute();
     }
+
+        public interface JsonGetTaskListener {
+            void onComplete(String jsonString, Exception e);
+        }
 
     // https://stackoverflow.com/questions/44309241/warning-this-asynctask-class-should-be-static-or-leaks-might-occur
     public static class EndpointsAsyncTask extends AsyncTask<Context, Void, String> {
         private MyApi myApiService = null;
         private WeakReference<MainActivity> activityWeakReference;
+        private JsonGetTaskListener mListener = null;
+        private Exception mError = null;
 
-        EndpointsAsyncTask(MainActivity context) {
+
+        void setContext(MainActivity context){
             activityWeakReference = new WeakReference<>(context); //used weak reference to prevent memory leaks
             activityWeakReference.get().progressBar.setVisibility(View.VISIBLE);
+        }
+
+
+        public EndpointsAsyncTask setListener(JsonGetTaskListener listener) {
+            this.mListener = listener;
+            return this;
         }
 
         @Override
@@ -89,16 +107,37 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(String result) {
-            activityWeakReference.get().progressBar.setVisibility(View.INVISIBLE);
-            if (result!=null) {
-                Class destination = JokeDisplayActivity.class;
-                Intent goToLibraryActivity = new Intent(activityWeakReference.get(), destination);
-                goToLibraryActivity.putExtra(JOKE_INTENT, result);
-                activityWeakReference.get().startActivity(goToLibraryActivity);
-            } else {
-                Toast.makeText( activityWeakReference.get(), R.string.error, Toast.LENGTH_LONG).show();
+        protected void onCancelled() {
+            if (this.mListener != null) {
+                mError = new InterruptedException("AsyncTask cancelled");
+                this.mListener.onComplete(null, mError);
             }
         }
+
+        @Override
+        protected void onPostExecute(String result) {
+
+            if (this.mListener != null)
+                this.mListener.onComplete(result, mError);
+
+            if (activityWeakReference!=null){
+                Context context = activityWeakReference.get();
+                activityWeakReference.get().progressBar.setVisibility(View.INVISIBLE);
+
+                if (result!=null){
+                    Class destination = JokeDisplayActivity.class;
+                    Intent goToLibraryActivity = new Intent(context, destination);
+                    goToLibraryActivity.putExtra(JOKE_INTENT, result);
+                    context.startActivity(goToLibraryActivity);
+                } else {
+                    Toast.makeText(context, R.string.error, Toast.LENGTH_LONG).show();
+                } }
+            }
+
+        public interface JsonGetTaskListener {
+           public void onComplete(String jsonString, Exception e);
+        }
     }
-}
+    }
+
+
